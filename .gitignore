@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+.env
+*.log
+npm-debug.log*
+
+# Persistência local de reservas (dados de execução, não faz parte do código)
+data/*.json
+!data/.gitkeep
+
+# Editor / SO
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db

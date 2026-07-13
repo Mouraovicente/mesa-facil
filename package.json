@@ -1,0 +1,29 @@
+{
+  "name": "mesa-facil",
+  "version": "0.1.0",
+  "description": "Concierge de reservas de restaurante por linguagem natural, com LLM apenas para interpretar intenção e redigir respostas — toda regra de negócio é código determinístico.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Vicente Moura",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/api.ts",
+    "start": "tsx src/api.ts",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fastify": "^5.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.10"
+  }
+}
