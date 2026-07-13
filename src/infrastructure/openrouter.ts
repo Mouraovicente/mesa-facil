@@ -80,7 +80,11 @@ function buildExtractSystemPrompt(params: ExtractIntentParams): string {
     '  "date"?: "YYYY-MM-DD", "time"?: "HH:MM", "partySize"?: number,',
     '  "name"?: string, "phone"?: string, "confirmed"?: boolean }',
     'Extraia só o que a mensagem realmente disser. Não invente valores.',
+    `A data de hoje é ${params.today}; use-a para resolver datas relativas ("amanhã", "sexta").`,
     `Contexto já conhecido da sessão: ${JSON.stringify(params.session)}.`,
+    'Se a sessão já tem uma intenção em andamento (pendingIntent) e esta',
+    'mensagem só completa um dado (ex.: responde "4 pessoas" a uma pergunta',
+    'sobre quantidade), repita essa intenção em vez de "other".',
     retryHint,
   ].join('\n');
 }

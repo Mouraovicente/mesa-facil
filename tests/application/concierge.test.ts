@@ -42,6 +42,47 @@ describe('concierge happy path (criação com confirmação em duas etapas)', ()
   });
 });
 
+describe('concierge preenchimento gradual de entidades entre turnos', () => {
+  it('mantém a intenção "create" pendente mesmo quando o LLM não a repete a cada turno', async () => {
+    const llm = new ScriptedLlm({
+      extractResponses: [
+        JSON.stringify({ intent: 'create' }),
+        JSON.stringify({ intent: 'other', date: '2026-08-20' }),
+        JSON.stringify({ intent: 'other', time: '20:00' }),
+        JSON.stringify({ intent: 'other', partySize: 4 }),
+        JSON.stringify({ intent: 'other', name: 'Carla' }),
+        JSON.stringify({ intent: 'other', confirmed: true }),
+      ],
+    });
+    const repo = new InMemoryReservationRepository();
+    const sessions = new InMemorySessionStore();
+    const deps = { llm, repo, sessions, now: NOW };
+
+    await handleMessage(deps, 's1', 'oi, quero reservar uma mesa');
+    expect(llm.renderReplyCalls[0]?.outcome).toEqual({ type: 'clarify', intent: 'create', missing: 'date' });
+
+    await handleMessage(deps, 's1', '2026-08-20');
+    expect(llm.renderReplyCalls[1]?.outcome).toEqual({ type: 'clarify', intent: 'create', missing: 'time' });
+
+    await handleMessage(deps, 's1', 'as 20:00');
+    expect(llm.renderReplyCalls[2]?.outcome).toEqual({ type: 'clarify', intent: 'create', missing: 'partySize' });
+
+    await handleMessage(deps, 's1', '4 pessoas');
+    expect(llm.renderReplyCalls[3]?.outcome).toEqual({ type: 'clarify', intent: 'create', missing: 'name' });
+
+    await handleMessage(deps, 's1', 'Carla');
+    expect(llm.renderReplyCalls[4]?.outcome).toEqual({
+      type: 'confirm-create',
+      draft: { date: '2026-08-20', time: '20:00', partySize: 4, name: 'Carla', phone: undefined },
+    });
+
+    await handleMessage(deps, 's1', 'sim');
+    const reservations = await repo.list();
+    expect(reservations).toHaveLength(1);
+    expect(reservations[0]?.name).toBe('Carla');
+  });
+});
+
 describe('concierge lida com falhas do LLM sem nunca lançar exceção', () => {
   it('JSON inválido duas vezes seguidas cai no fallback explícito', async () => {
     const llm = new ScriptedLlm({

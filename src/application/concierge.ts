@@ -32,8 +32,9 @@ export interface ConciergeDeps {
 export async function handleMessage(deps: ConciergeDeps, sessionId: string, message: string): Promise<string> {
   const logger = deps.logger ?? console;
   const session = deps.sessions.get(sessionId);
+  const today = (deps.now ?? (() => new Date()))().toISOString().slice(0, 10);
 
-  const extraction = await extractValidIntent(deps.llm, message, session, logger);
+  const extraction = await extractValidIntent(deps.llm, message, session, today, logger);
   if (!extraction.ok) {
     // Duas tentativas falharam: nunca lançamos exceção nem fingimos sucesso.
     // O fallback é um texto fixo, fora do alcance de um LLM que já mostrou
@@ -57,6 +58,7 @@ async function extractValidIntent(
   llm: LlmPort,
   message: string,
   session: SessionState,
+  today: string,
   logger: Logger
 ): Promise<{ ok: true; data: Intent } | { ok: false }> {
   let previousError: string | undefined;
@@ -64,7 +66,7 @@ async function extractValidIntent(
   for (let attempt = 0; attempt < MAX_EXTRACT_ATTEMPTS; attempt += 1) {
     let raw: string;
     try {
-      raw = await llm.extractIntent({ message, session, previousError });
+      raw = await llm.extractIntent({ message, session, today, previousError });
     } catch (err) {
       previousError = err instanceof Error ? err.message : String(err);
       logger.error('extractIntent lançou um erro', err);
@@ -120,6 +122,7 @@ function resetTransactionFields(session: SessionState): SessionState {
     phone: undefined,
     draft: undefined,
     awaitingConfirmation: false,
+    pendingIntent: undefined,
   };
 }
 
@@ -134,13 +137,18 @@ async function resolveOutcome(
     return resolveConfirmation(deps, session, session.draft, intent, now);
   }
 
-  switch (intent.intent) {
+  // Se o LLM não repetir a intenção neste turno (ex.: o usuário só respondeu
+  // "4 pessoas" à pergunta anterior), continuamos a intenção pendente da
+  // sessão em vez de tratar a mensagem como "other".
+  const effectiveIntent = intent.intent !== 'other' ? intent.intent : session.pendingIntent;
+
+  switch (effectiveIntent) {
     case 'create':
-      return resolveCreate(session);
+      return resolveCreate({ ...session, pendingIntent: 'create' });
     case 'cancel':
-      return resolveCancel(deps, session);
+      return resolveCancel(deps, { ...session, pendingIntent: 'cancel' });
     case 'check':
-      return resolveCheck(deps, session);
+      return resolveCheck(deps, { ...session, pendingIntent: 'check' });
     default:
       return { outcome: { type: 'other' }, session };
   }

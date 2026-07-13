@@ -15,7 +15,7 @@ describe('OpenRouterLlm', () => {
     const fetchFn = fakeFetchReturning('{"intent":"other"}');
     const llm = new OpenRouterLlm({ apiKey: 'test-key', fetchFn: fetchFn as unknown as typeof fetch });
 
-    const result = await llm.extractIntent({ message: 'oi', session: {} });
+    const result = await llm.extractIntent({ message: 'oi', session: {}, today: '2026-07-13' });
 
     expect(result).toBe('{"intent":"other"}');
     expect(fetchFn).toHaveBeenCalledTimes(1);
@@ -30,7 +30,7 @@ describe('OpenRouterLlm', () => {
     const fetchFn = vi.fn(async () => new Response('erro', { status: 500 }));
     const llm = new OpenRouterLlm({ apiKey: 'test-key', fetchFn: fetchFn as unknown as typeof fetch });
 
-    await expect(llm.extractIntent({ message: 'oi', session: {} })).rejects.toThrow();
+    await expect(llm.extractIntent({ message: 'oi', session: {}, today: '2026-07-13' })).rejects.toThrow();
   });
 
   it('renderReply também usa a porta HTTP e devolve o texto da resposta', async () => {

@@ -10,6 +10,8 @@ import type { SessionState } from './session-store.js';
 export interface ExtractIntentParams {
   readonly message: string;
   readonly session: SessionState;
+  /** Data/hora atual (YYYY-MM-DD), para o LLM resolver referências relativas como "amanhã" ou "sexta". */
+  readonly today: string;
   /** Preenchido apenas na tentativa de retry, com o erro da tentativa anterior. */
   readonly previousError?: string;
 }

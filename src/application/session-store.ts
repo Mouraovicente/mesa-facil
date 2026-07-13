@@ -19,6 +19,14 @@ export interface SessionState {
   readonly partySize?: number;
   readonly name?: string;
   readonly phone?: string;
+  /**
+   * Intenção em andamento (create/cancel/check) enquanto o usuário ainda
+   * está completando os dados aos poucos. Sem isso, uma mensagem de
+   * acompanhamento que não repete a intenção (ex.: apenas "4 pessoas" em
+   * resposta a "para quantas pessoas?") seria classificada como "other" e
+   * perderia o fio da conversa.
+   */
+  readonly pendingIntent?: 'create' | 'cancel' | 'check';
   /** true quando o concierge já perguntou "posso confirmar?" e aguarda sim/não. */
   readonly awaitingConfirmation?: boolean;
   readonly draft?: ReservationDraft;

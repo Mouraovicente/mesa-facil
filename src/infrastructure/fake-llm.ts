@@ -21,7 +21,7 @@ export class FakeLlm implements LlmPort {
   }
 }
 
-function heuristicExtract({ message, session }: ExtractIntentParams): Record<string, unknown> {
+function heuristicExtract({ message, session, today }: ExtractIntentParams): Record<string, unknown> {
   const text = message.toLowerCase();
 
   if (session.awaitingConfirmation) {
@@ -33,7 +33,7 @@ function heuristicExtract({ message, session }: ExtractIntentParams): Record<str
 
   const result: Record<string, unknown> = { intent: detectIntent(text) };
 
-  const date = extractDate(text);
+  const date = extractDate(text, today);
   if (date) result.date = date;
 
   const time = extractTime(text);
@@ -55,14 +55,28 @@ function detectIntent(text: string): 'create' | 'cancel' | 'check' | 'other' {
   return 'other';
 }
 
-function extractDate(text: string): string | undefined {
+function extractDate(text: string, today: string): string | undefined {
   const isoMatch = text.match(/(\d{4}-\d{2}-\d{2})/);
   if (isoMatch) return isoMatch[1];
 
   const brMatch = text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
   if (brMatch) return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
 
+  // Suporte simples para referências relativas óbvias. Dias da semana
+  // ("sexta", "próxima terça" etc.) exigem entendimento de linguagem
+  // natural de verdade — isso é feito pelo adaptador OpenRouter, não aqui.
+  // Sem \b no final: "ã" não é um caractere de palavra para o regex
+  // JavaScript (só ASCII), então um \b logo depois dele nunca bate.
+  if (/\bhoje\b/.test(text)) return today;
+  if (/\bamanh[ãa]/.test(text)) return addDays(today, 1);
+
   return undefined;
+}
+
+function addDays(isoDate: string, days: number): string {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
 }
 
 function extractTime(text: string): string | undefined {
