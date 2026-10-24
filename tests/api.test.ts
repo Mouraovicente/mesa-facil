@@ -3,6 +3,9 @@ import { buildApi } from '../src/api.js';
 import { FakeLlm } from '../src/infrastructure/fake-llm.js';
 import { InMemoryReservationRepository } from './helpers/in-memory-repository.js';
 
+// Data sempre no futuro (o app rejeita datas passadas); evita bomba-relógio.
+const futureDate = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+
 describe('POST /chat', () => {
   it('devolve uma resposta em texto para uma mensagem válida', async () => {
     const app = buildApi({ llm: new FakeLlm(), repo: new InMemoryReservationRepository() });
@@ -41,7 +44,7 @@ describe('POST /chat', () => {
     await app.inject({
       method: 'POST',
       url: '/chat',
-      payload: { sessionId: 'sticky', message: 'quero reservar mesa pra 2026-08-01 as 20:00, 2 pessoas, nome Bia' },
+      payload: { sessionId: 'sticky', message: `quero reservar mesa pra ${futureDate} as 20:00, 2 pessoas, nome Bia` },
     });
 
     const second = await app.inject({

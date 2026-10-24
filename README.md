@@ -7,7 +7,7 @@ Mesa Fácil é um concierge de reservas de restaurante que conversa em linguagem
 | Camada / Item | Tecnologia | Papel |
 | --- | --- | --- |
 | Linguagem | TypeScript (strict, ESM) | Tipagem em todas as camadas, `tsc --noEmit` como gate de qualidade |
-| Runtime | Node.js >= 20 | `engines` no `package.json`; CI roda em Node 22 |
+| Runtime | Node.js >= 22 | `engines` no `package.json`; CI roda em Node 22 |
 | API HTTP | Fastify | Único endpoint `POST /chat` + serve a página de chat |
 | Validação | Zod | Contrato de saída do LLM (`Intent`) e do corpo da requisição HTTP |
 | LLM (produção) | OpenRouter (`src/infrastructure/openrouter.ts`) | Extrai intenção e redige respostas via API real, atrás de uma porta |
@@ -81,7 +81,7 @@ A seta pontilhada marca as **portas** (interfaces definidas em `src/application/
 
 ## Como rodar
 
-Pré-requisitos: Node.js >= 20.
+Pré-requisitos: Node.js >= 22.
 
 ```bash
 npm install
